@@ -12,9 +12,6 @@ def main(mytimer: func.TimerRequest, context: func.Context) -> None:
     with open(context.function_directory + '\config.json', 'r') as con:
         config = json.load(con)
 
-    logging.info('printing data urls from config')
-    logging.info(config['dataURLs'])
-
     start(config, 'tmpIRS2') 
 
     if mytimer.past_due:
