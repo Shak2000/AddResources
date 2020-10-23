@@ -1,15 +1,23 @@
 import datetime
 import logging
-
+import json
+from pymongo import MongoClient, TEXT
+from .irs_scraper import start
 import azure.functions as func
-import irs_scraper
 
-def main(mytimer: func.TimerRequest) -> None:
+def main(mytimer: func.TimerRequest, context: func.Context) -> None:
     utc_timestamp = datetime.datetime.utcnow().replace(
         tzinfo=datetime.timezone.utc).isoformat()
+
+    with open(context.function_directory + '\config.json', 'r') as con:
+        config = json.load(con)
+
+    logging.info('printing data urls from config')
+    logging.info(config['dataURLs'])
+
+    start(config, 'tmpIRS2') 
 
     if mytimer.past_due:
         logging.info('The timer is past due!')
 
-    df = grab_data() 
-    logging.info('Python timer trigger function ran at %s', utc_timestamp)
+    logging.info('Python timer trigger function for IRS Scraping ran at utc: %s', utc_timestamp)

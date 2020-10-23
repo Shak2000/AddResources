@@ -5,17 +5,7 @@ import random
 import os
 from tqdm import tqdm
 
-# set the DB user name and password in config
-with open('config.json', 'r') as con:
-  config = json.load(con)
-
-# Establish global variables
-client = MongoClient(
-    "mongodb+srv://" + config['userId'] + ":" + config['password'] 
-    + "@shelter-rm3lc.azure.mongodb.net/shelter?retryWrites=true&w=majority"
-)
 dataset = 'shelter'
-
 
 def make_ngrams(name, min_size=7):
     """Convert service name into list of n-grams.
@@ -166,20 +156,27 @@ def locate_potential_duplicate(name, zip, client, collection):
     dupe_candidate = coll.find_one({"$text": {"$search": ' '.join(grammed_name)}, 'zip': zip})["name"]
     return dupe_candidate
 
-
-def main(config, client, collection):
+def start(config, collection='tmpIRS'):
     code_dict = config['NTEE_codes']
+    client = MongoClient(
+    "mongodb+srv://" + config['userId'] + ":" + config['password'] 
+    + "@shelter-rm3lc.azure.mongodb.net/shelter?retryWrites=true&w=majority"
+    )
     df = grab_data(config, code_dict)
-    if client[dataset][collection].count() == 0:  # Check if the desired collection is empty
-        insert_services(df.to_dict('records'), client, collection)  # No need to check for duplicates in an empty collection
-    else:
-        refresh_ngrams(client, collection)
-        for i in range(len(df)):
-            dc = locate_potential_duplicate(df.loc[i, 'NAME'], df.loc[i, 'ZIP'], client, collection)
-            if check_similarity(df.loc[i, 'NAME'], dc):
-                df.drop(i)
-        df = df.reset_index(drop=True)
-        insert_services(df.to_dict('records'), client, collection)
+    # if client[dataset][collection].count() == 0:  # Check if the desired collection is empty
+    #     insert_services(df.to_dict('records'), client, collection)  # No need to check for duplicates in an empty collection
+    # else:
+    #     refresh_ngrams(client, collection)
+    #     for i in range(len(df)):
+    #         dc = locate_potential_duplicate(df.loc[i, 'NAME'], df.loc[i, 'ZIP'], client, collection)
+    #         if check_similarity(df.loc[i, 'NAME'], dc):
+    #             df.drop(i)
+    #     df = df.reset_index(drop=True)
+    #     insert_services(df.to_dict('records'), client, collection)
 
 if __name__ == "__main__":
-    main(config, client, 'tmpIRS')
+
+    with open('config.json', 'r') as con:
+        config = json.load(con)
+
+    start(config, 'tmpIRS')
