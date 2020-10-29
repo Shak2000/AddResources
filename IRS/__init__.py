@@ -9,7 +9,7 @@ def main(mytimer: func.TimerRequest, context: func.Context) -> None:
     utc_timestamp = datetime.datetime.utcnow().replace(
         tzinfo=datetime.timezone.utc).isoformat()
 
-    with open(context.function_directory + '\config.json', 'r') as con:
+    with open(context.function_directory + '/config.json', 'r') as con:
         config = json.load(con)
 
     start(config, 'tmpIRS2') 
