@@ -1,6 +1,7 @@
 import datetime
 import logging
 import json
+import os
 from pymongo import MongoClient, TEXT
 from .irs_scraper import start
 import azure.functions as func
@@ -12,8 +13,9 @@ def main(mytimer: func.TimerRequest, context: func.Context) -> None:
     with open(context.function_directory + '/config.json', 'r') as con:
         config = json.load(con)
 
-    start(config, 'tmpIRS2') 
-
+    client = os.environ("MONGO_DB_CONNECTION_STRING")
+    start(config, client, 'tmpIRS2')
+     
     if mytimer.past_due:
         logging.info('The timer is past due!')
 
