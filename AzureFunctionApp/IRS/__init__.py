@@ -19,7 +19,7 @@ def main(mytimer: func.TimerRequest, context: func.Context) -> None:
     
     client = MongoClient(conn_string)['shelter']
     
-    start(config, client, 'tmpIRS2')
+    main(config, client, 'services', 'tmpIRS_Shri', 'tmpIRSDups_Shri')
      
     if mytimer.past_due:
         logging.info('The timer is past due!')

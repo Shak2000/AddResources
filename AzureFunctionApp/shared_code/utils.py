@@ -5,11 +5,16 @@ import re
 import os
 
 # Establish global variables
-client = MongoClient(
+
+def get_mongo_client(connection_string):
+   return MongoClient(connection_string)['shelter']
+
+def get_mongo_client(dbusername, dbpassword):
+    client = MongoClient(
     "mongodb+srv://" + os.environ.get('DBUSERNAME') + ":" + os.environ.get('PW')
     + "@shelter-rm3lc.azure.mongodb.net/shelter?retryWrites=true&w=majority"
-)['shelter']
-
+    )['shelter']
+    return client
 
 def insert_services(data, client, collection):
     """Intake scraped services that have been processed and dupe-checked, and add to MongoDB.
