@@ -185,7 +185,7 @@ def locate_potential_duplicate(name, zipcode, client, collection):
 def start(config, client, collection='tmpIRS'):
     code_dict = config['NTEE_codes']
     df = grab_data(config, code_dict)
-    if client[collection].count() == 0:  # Check if the desired collection is empty
+    if client[collection].estimated_document_count() == 0:  # Check if the desired is empty
         # No need to check for duplicates in an empty collection
         insert_services(df.to_dict('records'), client, collection)
     else:
@@ -208,6 +208,6 @@ if __name__ == "__main__":
     client = MongoClient(
     "mongodb+srv://" + config['userId'] + ":" + config['password'] 
     + "@shelter-rm3lc.azure.mongodb.net/shelter?retryWrites=true&w=majority"
-    )
+    )['shelter']
 
     start(config, client, 'tmpIRS')

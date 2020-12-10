@@ -13,11 +13,11 @@ def main(mytimer: func.TimerRequest, context: func.Context) -> None:
     with open(context.function_directory + '/config.json', 'r') as con:
         config = json.load(con)
 
-    conn_string = os.environ["MONGO_DB_CONNECTION_STRING"]
+    conn_string = os.environ['MONGO_DB_CONNECTION_STRING']
     # temp
     logging.info("Connection string is : " + conn_string[:10])
     
-    client = MongoClient(conn_string)
+    client = MongoClient(conn_string)['shelter']
     
     start(config, client, 'tmpIRS2')
      
