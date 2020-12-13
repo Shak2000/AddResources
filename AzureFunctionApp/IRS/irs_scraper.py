@@ -11,7 +11,7 @@ import requests
 from datetime import datetime, date
 
 if __package__:  # if script is being run as a module
-    from shared_code.utils import (
+    from ..shared_code.utils import (
         check_similarity, refresh_ngrams,
         make_ngrams, locate_potential_duplicate,
         distance, insert_services, get_mongo_client
@@ -22,7 +22,7 @@ else:  # if script is being run as a file
         # add parent directory to sys.path so utils module is accessible
         sys.path.insert(0, _i)
     del _i  # clean up global name space
-    from shared_code.utils import (
+    from ..shared_code.utils import (
         check_similarity, refresh_ngrams,
         make_ngrams, locate_potential_duplicate,
         distance, insert_services, get_mongo_client
