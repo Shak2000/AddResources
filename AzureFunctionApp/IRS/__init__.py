@@ -14,8 +14,6 @@ def main(mytimer: func.TimerRequest, context: func.Context) -> None:
         config = json.load(con)
 
     conn_string = os.environ['MONGO_DB_CONNECTION_STRING']
-    # temp
-    logging.info("Connection string is : " + conn_string[:10])
     
     client = MongoClient(conn_string)['shelter']
     
