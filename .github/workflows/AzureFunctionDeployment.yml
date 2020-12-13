@@ -1,7 +1,9 @@
 name: Deploy Python project to Azure Function App
 
 on:
-  [push]
+  push:
+    branches:
+      - master
 
 env:
   AZURE_FUNCTIONAPP_NAME: irs-pipeline2 # set this to your application's name
