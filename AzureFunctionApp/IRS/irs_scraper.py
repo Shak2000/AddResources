@@ -9,6 +9,7 @@ import re
 from collections import OrderedDict
 import requests
 from datetime import datetime, date
+import logging
 
 if __package__:  # if script is being run as a module
     from ..shared_code.utils import (
@@ -72,23 +73,23 @@ def grab_data(config, code_dict):
     codes = '|'.join(config['NTEE_codes'].keys())
     df = pd.DataFrame()
     for u in urls:
-        print(f'grabbing {u}')
+        logging.info(f'grabbing {u}')
         response = pd.read_csv(u, usecols=[
             'EIN', 'NAME', 'STREET', 'CITY', 'STATE', 'ZIP', 'NTEE_CD'
         ]).rename(columns={
             'NAME': 'name', 'STREET': 'address1',
             'CITY': 'city', 'STATE': 'state', 'ZIP': 'zip'
         }).fillna('0')
-        print(f'initial shape: {response.shape}')
+        logging.debug(f'initial shape: {response.shape}')
         response = response[
             response['NTEE_CD'].str.contains(codes)
         ]  # filter for desired NTEE codes
         response = response[
             ~response['state'].isin(config['military_mail_locs'])
         ]  # filter out military mail locs
-        print(list(set(list(response['state']))))
+        logging.debug(list(set(list(response['state']))))
         response['zip'] = response['zip'].str.slice(start=0, stop=5)  # truncate ZIP codes
-        print(f'final shape: {response.shape}')
+        logging.debug(f'final shape: {response.shape}')
         df = df.append(response, ignore_index=True)
     df = df.drop_duplicates(
         subset=['name', 'address1', 'city', 'state', 'zip'], ignore_index=True
@@ -116,7 +117,7 @@ def grab_data(config, code_dict):
     df['service_type'] = code_types
     df['service_subtype'] = code_subtypes
     df['source'] = ['IRS'] * len(df)
-    print(f'completed compiling dataframe of shape: {df.shape}')
+    logging.info(f'completed compiling dataframe of shape: {df.shape}')
     return df
 
 
@@ -135,7 +136,7 @@ def purge_EIN_duplicates(df, client, collection, dupe_collection):
         if prevent_IRS_EIN_duplicates(EIN, client, collection):
             found_duplicates.append(i)
     duplicate_df = df.loc[found_duplicates].reset_index(drop=True)
-    print('inserting tmpIRS dupes into the dupe collection')
+    logging.info('inserting tmpIRS dupes into the dupe collection')
     insert_services(duplicate_df.to_dict('records'), client, dupe_collection)
     df = df.drop(found_duplicates).reset_index(drop=True)
     return df
@@ -151,28 +152,28 @@ def main(config, client, check_collection, dump_collection, dupe_collection):
             str(stored_update_date), '%Y-%m-%d %H:%M:%S'
         ).date()
         if check_site_for_new_date(stored_update_date):
-            print('No new update detected. Exiting script...')
+            logging.info('No new update detected. Exiting script...')
             return
     except KeyError:
         pass
-    print('updating scraped update date in data-sources collection')
+    logging.info('updating scraped update date in data-sources collection')
     client['data_sources'].update_one(
         {"name": "irs_exempt_organizations"},
         {'$set': {'last_updated': str(scraped_update_date)}}
     )
     code_dict = config['NTEE_codes']
     df = grab_data(config, code_dict)
-    print('purging EIN duplicates')
+    logging.info('purging EIN duplicates')
     if client[dump_collection].estimated_document_count() > 0:
         df = purge_EIN_duplicates(df, client, dump_collection, dupe_collection)
     if client[check_collection].estimated_document_count() == 0:
         # No need to check for duplicates in an empty collection
         insert_services(df.to_dict('records'), client, dump_collection)
     else:
-        print('refreshing ngrams')
+        logging.info('refreshing ngrams')
         refresh_ngrams(client, check_collection)
         found_duplicates = []
-        print('checking for duplicates in the services collection')
+        logging.info(f'checking for duplicates in the {check_collection} collection')
         for i in tqdm(range(len(df))):
             dc = locate_potential_duplicate(
                 df.loc[i, 'name'], df.loc[i, 'zip'], client, check_collection
@@ -181,11 +182,11 @@ def main(config, client, check_collection, dump_collection, dupe_collection):
                 if check_similarity(df.loc[i, 'name'], dc):
                     found_duplicates.append(i)
         duplicate_df = df.loc[found_duplicates].reset_index(drop=True)
-        print(f'inserting {duplicate_df.shape[0]} services dupes into the dupe collection')
+        logging.info(f'inserting {duplicate_df.shape[0]} services dupes into the dupe collection')
         if len(duplicate_df) > 0:
             insert_services(duplicate_df.to_dict('records'), client, dupe_collection)
         df = df.drop(found_duplicates).reset_index(drop=True)
-        print(f'final df shape: {df.shape}')
+        logging.debug(f'final df shape: {df.shape}')
         if len(df) > 0:
             insert_services(df.to_dict('records'), client, dump_collection)
 
