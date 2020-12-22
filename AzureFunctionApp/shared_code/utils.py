@@ -3,6 +3,7 @@ from collections import OrderedDict
 from tqdm import tqdm
 import re
 import os
+import urllib
 
 # Establish global variables
 
@@ -10,8 +11,10 @@ def get_mongo_client(connection_string):
    return MongoClient(connection_string)['shelter']
 
 def get_mongo_client(dbusername, dbpassword):
+
+    #encode username and password in case they contain special characters e.g. @
     client = MongoClient(
-    "mongodb+srv://" + os.environ.get('DBUSERNAME') + ":" + os.environ.get('PW')
+    "mongodb+srv://" + urllib.parse.quote(os.environ.get('DBUSERNAME')) + ":" + urllib.parse.quote(os.environ.get('PW'))
     + "@shelter-rm3lc.azure.mongodb.net/shelter?retryWrites=true&w=majority"
     )['shelter']
     return client
